@@ -5,14 +5,26 @@ import xlrd
 
 from config import *
 
-
 string_result = string_result_output_filename
 trans_result = trans_result_output_filename
 
-# use trans group string to merge
+font = openpyxl.styles.Font(
+    name='Microsoft YaHei',
+    size=10,
+    bold=False,
+    italic=False,
+    vertAlign=None,
+    underline='none',
+    strike=False,
+    color='FF000000')
+
+fill = openpyxl.styles.PatternFill(
+    fill_type=None,
+    start_color='FFFFFFFF',
+    end_color='FF000000')
 
 
-def merge_trans():
+def merge_trans(outfile):
     translated_df_merge_result = pd.read_excel(
         trans_result, index_col='index').fillna('')
 
@@ -60,17 +72,14 @@ def merge_trans():
                             break
                         else:
                             pass
-
-            ws.append((table, id, english, english_female, custom, custom_female))
+            ws.append(
+                (table, id, english, english_female, custom, custom_female))
 
     try:
-        wb.save(merge_result_output_filename)
+        wb.save(outfile)
+        print("{filename} outputed".format(filename=outfile))
     except:
         print('Error write file!')
-    print("{filename} outputed".format(filename=merge_result_output_filename))
 
-
-def merge_excel(string_result, trans_result):
-    return
-
-merge_trans()
+if __name__ = '__main__':
+    merge_trans(merge_result_output_filename)

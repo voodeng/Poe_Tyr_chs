@@ -23,10 +23,11 @@ T_ORG_DIR = 'en'
 
 # Typename = Tyranny | Poe
 TYPE_NAME = 'Tyranny'
-VER_DIR = T_VER
+VER_DIR = '1.0'
 
 # 目录
-HOME_DIR = os.path.abspath('..')
+# HOME_DIR = os.path.abspath('..')
+HOME_DIR = os.path.dirname(os.path.split(os.path.realpath(__file__))[0])
 OUTPUT_DIR = os.path.join(HOME_DIR, 'output')
 TEMP_DIR = os.path.join(HOME_DIR, 'temp_output')
 ORIGIN_DIR = os.path.join(HOME_DIR, 'original')
@@ -48,30 +49,35 @@ trans_result_output_filename = os.path.join(
 merge_result_output_filename = os.path.join(
     TEMP_DIR, TYPE_NAME + '_merge_result.xlsx')
 
-# 补丁表
-patch_filename = os.path.join(STORAGE_DIR, TYPE_NAME + "_patch_table.xlsx")
-# 已打补丁
-merge_patched = os.path.join(OUTPUT_DIR, TYPE_NAME + "_merge_patched.xlsx")
-# 最终输出引用表
-output_full_filename = os.path.join(OUTPUT_DIR, TYPE_NAME + "_final.xlsx")
+# 自定义补丁表
+patch_filename = os.path.join(
+    STORAGE_DIR, TYPE_NAME + "_patch_table.xlsx")
 
-# 已有翻译
+# 已打补丁
+merge_patched = os.path.join(
+    OUTPUT_DIR, TYPE_NAME + "_merge_patched.xlsx")
+
+# 最终输出引用表
+output_full_filename = os.path.join(
+    OUTPUT_DIR, TYPE_NAME + "_final.xlsx")
+
+# 已有翻译文件夹
 TRANDS_GROUP_DIR = 'translate_group_result'
 translated_result_list = {
     'Poe': [
         {
-            "group_name": "ali4.3",
-            "path": "Poe/ali4.3"
+            "group_name": "ali4.4",
+            "path": "Poe/ali4.4"
         }
     ],
     'Tyranny': [
         {
             "group_name": "ali",
-            "path": "Tyr/ali1.6"
+            "path": "Tyr/ali3.3"
         },
         {
             "group_name": "3dm",
-            "path": "Tyr/3dm1.5"
+            "path": "Tyr/3dm2.0"
         }
     ]
 }
