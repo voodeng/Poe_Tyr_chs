@@ -9,23 +9,17 @@ import xlrd
 
 from config import *
 from lib import *
-
 '''
 对多语合并文件打补丁ha
 '''
 
-l_key = '[ali]DefaultText'
-lf_key = '[ali]FemaleText'
-r_key = '[3dm]DefaultText'
-rf_key = '[3dm]FemaleText'
 m_key = 'merged'
 f_key = 'merged_female'
 
-def initxdf(targe_file, custom_file):
-    targe_file = merge_result_output_filename
-    ldf = pd.read_excel(targe_file, index_col=[0])
 
-    # custom_file = os.path.join(STORAGE_DIR, 'Tyr_custom.xlsx')
+def initxdf(targe_file, custom_file):
+    targe_file = targe_file
+    ldf = pd.read_excel(targe_file, index_col=[0])
 
     if os.path.exists(custom_file):
         cdf = pd.read_excel(custom_file, index_col=[0])
@@ -34,9 +28,10 @@ def initxdf(targe_file, custom_file):
         xdf[m_key] = ''
         xdf[f_key] = ''
 
-    print('Start fix and patch Comprese file')
+    print(xdf.index)
+    print('Start fix and Comprese file')
     print('Targe file: ' + targe_file)
-    print('Patch file: ' + custom_file)
+    print('Custom file: ' + custom_file)
     return xdf
 
 
@@ -46,10 +41,9 @@ def new_merge(xdf):
     merges = []
     merges_female = []
 
-
     for i, row in xdf.iterrows():
-        new_cell = ''
-        new_f_cell = ''
+        new_cell = row['DefaultText']
+        new_f_cell = row['FemaleText']
 
         if row['Custom'] != '':
             new_cell = row['Custom']
@@ -57,8 +51,8 @@ def new_merge(xdf):
             new_f_cell = row['Custom_female']
 
         for k in translated_result_list[TYPE_NAME]:
-            dk = '[{n}]DefaultText'.format(n = k['group_name'])
-            fk = '[{n}]FemaleText'.format(n = k['group_name'])
+            dk = '[{n}]DefaultText'.format(n=k['group_name'])
+            fk = '[{n}]FemaleText'.format(n=k['group_name'])
 
             d_text = row[dk]
             f_text = row[fk]
@@ -80,8 +74,8 @@ def new_merge(xdf):
 
 # glossary 名词表替换
 def gloss_patch(Series, file):
-    print('replace golssary use: {f}'.format(f = file))
-    # gloss_file = os.path.join(STORAGE_DIR, 'Tyr_gloss.xlsx')
+    print('replace golssary use: {f}'.format(f=file))
+
     gloss_list = pd.read_excel(file).fillna('')
 
     en_key = 'en'
@@ -93,7 +87,7 @@ def gloss_patch(Series, file):
     gloss_list['chs_code'] = gloss_list[chs_key].str.extract(
         '\[url=.*?\](.*?)(?=\[/url\])', expand=False)
     gloss_list = gloss_list.fillna('')
-    gloss_list.ix[57]
+    # gloss_list.ix[57]
 
     for i, row in gloss_list.iterrows():
         if row[chs_key] != '':
@@ -112,7 +106,7 @@ def gloss_patch(Series, file):
 
 # name 替换
 def name_list(Series, file):
-    print('replace name use: {f}'.format(f = file))
+    print('replace name use: {f}'.format(f=file))
     new_ser = Series.copy()
 
     book = openpyxl.load_workbook(file)
@@ -120,9 +114,8 @@ def name_list(Series, file):
     for sheet in book:
         # print('read patch list:' + sheet.title)
         _sn = sheet.title
-        pr = pd.read_excel(file,sheetname=_sn).fillna('')
-        tr_list[_sn]=pr
-
+        pr = pd.read_excel(file, sheetname=_sn).fillna('')
+        tr_list[_sn] = pr
 
     def _fix(data):
         # n_list = pd.read_excel(file).fillna('')
@@ -136,11 +129,20 @@ def name_list(Series, file):
 
                 for k in am:
                     k = k.replace('[', '\\[').replace(']', '\\]')
-                    new_ser.str.replace(''.join(k), row['Chs'])
+                    new_ser = new_ser.str.replace(''.join(k), row['Chs'])
 
     for x in tr_list:
-        print('apply patch:' + sheet.title)
-        _fix(tr_list[x])
+        print('apply patch:' + x)
+        # _fix(tr_list[x])
+        for i, row in tr_list[x].iterrows():
+            if row['Chs'] != '' and row['Rep'] != '':
+                am = row['Rep'].split(',')
+                if row['Eng'] != '':
+                    am.append(row['Eng'])
+
+                for k in am:
+                    k = k.replace('[', '\\[').replace(']', '\\]')
+                    new_ser = new_ser.str.replace(''.join(k), row['Chs'])
 
     return new_ser
 
@@ -148,7 +150,6 @@ def name_list(Series, file):
 # fix ->
 def gui_patch(Series, file):
     print('patch gui')
-    # patch_file = os.path.join(STORAGE_DIR, 'Tyr_guifix.xlsx')
     patch_list = pd.read_excel(file, index_col=0).fillna('')
 
     new_s = Series.copy()
@@ -165,8 +166,9 @@ def wrquote(xdf):
     doub = xdf[xdf[m_key].str.contains('＂.*?')]
     sign = xdf[xdf[m_key].str.contains('＇.*?')]
     tign = pd.merge(doub, sign, how='outer')
-    tign[['Name', 'ID', 'DefaultText', l_key, m_key, f_key]].to_excel(
-        os.path.join(TEMP_DIR, 'quote.xlsx'))
+    tign.index = [tign['Name'] + '_' + tign['ID'].astype('str')]
+    tign[['Name', 'ID', 'DefaultText', m_key]].to_excel(
+        os.path.join(TEMP_DIR, 'quote.xlsx'), index_label='index')
 
     # 后期依次修改，先期转换为英文标点使用
     xdf[m_key] = xdf[m_key].str.replace('＂', '"')
@@ -176,29 +178,38 @@ def wrquote(xdf):
 def begin():
 
     target_file = merge_result_output_filename
+
     if TYPE_NAME == 'Tyranny':
         custom_file = os.path.join(STORAGE_DIR, 'Tyr_custom.xlsx')
     else:
         custom_file = os.path.join(STORAGE_DIR, 'Poe_en-chs.xlsx')
+
     xdf = initxdf(target_file, custom_file)
 
     xdf = new_merge(xdf)
 
     if TYPE_NAME == 'Tyranny':
-        xdf[m_key] = gloss_patch(xdf[m_key], os.path.join(STORAGE_DIR, 'Tyr_gloss.xlsx')).apply(fix_text)
-        xdf[f_key] = gloss_patch(xdf[f_key], os.path.join(STORAGE_DIR, 'Tyr_gloss.xlsx')).apply(fix_text)
-
-        xdf[m_key] = name_list(xdf[m_key], os.path.join(STORAGE_DIR, 'Tyr_name.xlsx'))
-        xdf[f_key] = name_list(xdf[f_key], os.path.join(STORAGE_DIR, 'Tyr_name.xlsx'))
-
-        xdf[m_key] = gui_patch(xdf[m_key], os.path.join(STORAGE_DIR, 'Tyr_guifix.xlsx'))
-
         # 未翻译的行
         def not_ch(text):
             return not has_ch(text)
 
-        xdf[xdf[l_key].apply(not_ch)].drop_duplicates(l_key).to_excel(
+        xdf[xdf[m_key].apply(not_ch)].drop_duplicates(m_key).to_excel(
             os.path.join(TEMP_DIR, 'notrans.xlsx'))
+
+        xdf[m_key] = gloss_patch(
+            xdf[m_key], os.path.join(STORAGE_DIR,
+                                     'Tyr_gloss.xlsx')).apply(fix_text)
+        xdf[f_key] = gloss_patch(
+            xdf[f_key], os.path.join(STORAGE_DIR,
+                                     'Tyr_gloss.xlsx')).apply(fix_text)
+
+        xdf[m_key] = name_list(xdf[m_key],
+                               os.path.join(STORAGE_DIR, 'Tyr_name.xlsx'))
+        xdf[f_key] = name_list(xdf[f_key],
+                               os.path.join(STORAGE_DIR, 'Tyr_name.xlsx'))
+
+        xdf[m_key] = gui_patch(xdf[m_key],
+                               os.path.join(STORAGE_DIR, 'Tyr_guifix.xlsx'))
 
         # 标点
         wrquote(xdf)
@@ -208,21 +219,24 @@ def begin():
         print('out:' + final_file)
         xdf[[m_key, f_key]].to_excel(final_file, index_label='index')
         # 参考用
-        xdf.to_excel(os.path.join(TEMP_DIR,'Tyr_tempcustom.xlsx'))
+        xdf.to_excel(os.path.join(TEMP_DIR, 'Tyr_tempcustom.xlsx'))
     elif TYPE_NAME == 'Poe':
         xdf[m_key] = xdf[m_key].apply(fix_text)
         xdf[f_key] = xdf[f_key].apply(fix_text)
 
-        xdf[m_key] = name_list(xdf[m_key], os.path.join(STORAGE_DIR, 'Poe_name.xlsx'))
-        xdf[f_key] = name_list(xdf[f_key], os.path.join(STORAGE_DIR, 'Poe_name.xlsx'))
+        xdf[m_key] = name_list(xdf[m_key],
+                               os.path.join(STORAGE_DIR, 'Poe_name.xlsx'))
+        xdf[f_key] = name_list(xdf[f_key],
+                               os.path.join(STORAGE_DIR, 'Poe_name.xlsx'))
 
-        xdf[m_key] = gui_patch(xdf[m_key], os.path.join(STORAGE_DIR, 'Poe_fix.xlsx'))
+        xdf[m_key] = gui_patch(xdf[m_key],
+                               os.path.join(STORAGE_DIR, 'Poe_fix.xlsx'))
 
         final_file = os.path.join(TEMP_DIR, TYPE_NAME + '_final.xlsx')
         print('out:' + final_file)
         xdf[[m_key, f_key]].to_excel(final_file, index_label='index')
         # 参考用
-        xdf.to_excel(os.path.join(TEMP_DIR,TYPE_NAME + '_tempcustom.xlsx'))
+        xdf.to_excel(os.path.join(TEMP_DIR, TYPE_NAME + '_tempcustom.xlsx'))
     else:
         print('Config error')
 

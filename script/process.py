@@ -64,15 +64,12 @@ def trans2excel(outfile):
 
 
 def merge2excel(outfile):
-    # string_excel = os.path.join(TEMP_DIR, 'Tyranny_string_result.xlsx')
-    # trans_excel = os.path.join(TEMP_DIR, 'Tyranny_trans_result.xlsx')
 
     string_excel = string_result_output_filename
     trans_excel = trans_result_output_filename
 
     print('l-excel: ' + string_excel)
     print('r-excel: ' + trans_excel)
-    # custom_excel = os.path.join(STORAGE_DIR,'Tyr_custom.xlsx')
 
     ldf = pd.read_excel(string_excel).fillna('')
     # ldf = ldf[['Name','ID','DefaultText','FemaleText','Custom','Custom_female']]
@@ -84,11 +81,6 @@ def merge2excel(outfile):
     xdf = ldf.join(rdf).drop_duplicates()
 
     xdf.to_excel(outfile)
-
-
-def use_custom():
-    custom_file = os.path.join(SOTRAGE_DIR, 'Tyr_custom.xlsx')
-    cdf = pd.DataFrame(custom_file)
 
 
 def start(**args):
@@ -111,8 +103,8 @@ def start(**args):
             print('creat file')
             callback(anyfile)
 
-    # 显示基本设置
-    print('Config: {t}'.format(t=TYPE_NAME))
+    # Print Config
+    print('Config: {t}, {v}'.format(t=TYPE_NAME, v=VER_DIR))
 
     # Original StringTable
     print('StringTable to Excel')
