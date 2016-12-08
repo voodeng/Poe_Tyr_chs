@@ -30,6 +30,7 @@ def origin2excel(outfile):
     string2excel(path, outfile)
 
 
+# fix: 重复的项会打乱原本的顺序...
 def trans2excel(outfile):
     translated_df_list = []
     trans_group = translated_result_list[TYPE_NAME]
@@ -50,6 +51,7 @@ def trans2excel(outfile):
             index=True,
             d_key=default_text_key,
             f_key=female_text_key)
+        # print(translated_df.index)
         translated_df_list.append(translated_df)
 
     translated_df_merge_result = translated_df_list[0]
@@ -57,9 +59,9 @@ def trans2excel(outfile):
     # join合并
     for df in translated_df_list[1:]:
         translated_df_merge_result = translated_df_merge_result.join(
-            df, how='outer')
+            df, how='outer') # how='outer'
 
-    translated_df_merge_result.fillna(value="")
+    # translated_df_merge_result.fillna(value="")
     translated_df_merge_result.to_excel(outfile)
 
 

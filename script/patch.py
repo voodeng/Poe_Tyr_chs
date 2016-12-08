@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import openpyxl
 import xlrd
+import datetime
 
 from config import *
 from lib import *
@@ -17,13 +18,29 @@ m_key = 'merged'
 f_key = 'merged_female'
 
 
+def e2df(file):
+    df = pd.read_excel(file).fillna('')
+
+    try:
+        df = df.set_index('index')
+    except:
+        df.index = [df['Name'] + '_' + df['ID'].astype('str')]
+        df.index.name = 'index'
+
+    # 清除重复索引
+    df = df[~df.index.duplicated()] # 原有基础上改，不会重排序索引
+    # idx = np.unique(df.index, return_index=True)[1]
+    # df = df.ix[idx]
+    return df
+
+
 def initxdf(targe_file, custom_file):
-    targe_file = targe_file
-    ldf = pd.read_excel(targe_file, index_col=[0])
+    ldf = e2df(targe_file)
+    xdf = ldf.copy()
 
     if os.path.exists(custom_file):
-        cdf = pd.read_excel(custom_file, index_col=[0])
-        xdf = ldf.join(cdf[['Custom', 'Custom_female']]).fillna('')
+        cdf = e2df(custom_file)
+        xdf = xdf.join(cdf[['Custom', 'Custom_female']], how='left').fillna('')
     else:
         xdf[m_key] = ''
         xdf[f_key] = ''
@@ -72,15 +89,33 @@ def new_merge(xdf):
     return xdf
 
 
+def patch_result_list(patch_filename):
+    # 读取替换表，并依照表格顺序，依次转化为df并有序添加到array中
+    book = openpyxl.load_workbook(patch_filename)
+
+    tr_list = {}  # 无序
+    tr2_list = []  # 有序 [{'name':工作表名,'data':工作表DF数据}]
+
+    for sheet in book:
+        # print(sheet.title)
+        _sn = sheet.title
+        pr = pd.read_excel(patch_filename, sheetname=_sn).fillna('')
+        tr2_list.append({'name': _sn, 'data': pr})
+        tr_list[_sn] = pr
+
+    print(u'替换表读取完毕')
+    return tr2_list
+
+
 # glossary 名词表替换
 def gloss_patch(Series, file):
     print('replace golssary use: {f}'.format(f=file))
 
     gloss_list = pd.read_excel(file).fillna('')
 
-    en_key = 'en'
-    chs_key = 'chs'
-    oth_key = 'oth'
+    en_key = 'Eng'
+    chs_key = 'Chs'
+    oth_key = 'Rep'
     # code key
     reg = '\[url=glossary:(.*?)\]'
     gloss_list['code'] = gloss_list[en_key].str.extract(reg, expand=False)
@@ -106,8 +141,9 @@ def gloss_patch(Series, file):
 
 # name 替换
 def name_list(Series, file):
+    begin = datetime.datetime.now()
     print('replace name use: {f}'.format(f=file))
-    new_ser = Series.copy()
+    # new_ser = Series.copy()
 
     book = openpyxl.load_workbook(file)
     tr_list = {}
@@ -117,23 +153,9 @@ def name_list(Series, file):
         pr = pd.read_excel(file, sheetname=_sn).fillna('')
         tr_list[_sn] = pr
 
-    def _fix(data):
-        # n_list = pd.read_excel(file).fillna('')
-        n_list = data
-
-        for i, row in n_list.iterrows():
-            if row['Chs'] != '' and row['Rep'] != '':
-                am = row['Rep'].split(',')
-                if row['Eng'] != '':
-                    am.append(row['Eng'])
-
-                for k in am:
-                    k = k.replace('[', '\\[').replace(']', '\\]')
-                    new_ser = new_ser.str.replace(''.join(k), row['Chs'])
-
     for x in tr_list:
         print('apply patch:' + x)
-        # _fix(tr_list[x])
+        # _rep(tr_list[x])
         for i, row in tr_list[x].iterrows():
             if row['Chs'] != '' and row['Rep'] != '':
                 am = row['Rep'].split(',')
@@ -142,21 +164,86 @@ def name_list(Series, file):
 
                 for k in am:
                     k = k.replace('[', '\\[').replace(']', '\\]')
-                    new_ser = new_ser.str.replace(''.join(k), row['Chs'])
+                    Series = Series.str.replace(''.join(k), row['Chs'])
 
-    return new_ser
+    end = datetime.datetime.now()
+    print('Time: {s}'.format(s = end - begin))
+    return Series
 
 
 # fix ->
 def gui_patch(Series, file):
     print('patch gui')
-    patch_list = pd.read_excel(file, index_col=0).fillna('')
+    patch_list = e2df(file)
 
     new_s = Series.copy()
     for i, row in patch_list.iterrows():
         if row['Custom'] != '':
             new_s[i] = row['Custom']
     return new_s
+
+
+# tmdf is DataFrame
+def rep_name(df, file, type):
+    begin = datetime.datetime.now()
+
+    tmdf = df.copy()
+
+    def tuidao(pre):
+        chs = pre['Chs']
+        eng = pre['Eng']
+        rep = pre['Rep'].split(',')
+        r_count = 0
+        if chs == '' or chs is None:
+            return
+
+        # way 先搜索对应的英文
+        def rep1():
+            items = tmdf[tmdf['DefaultText'].str.contains(eng, case=False)]
+            for i, row in items.iterrows():
+                if len(rep) < 2:
+                    row[m_key] = row[m_key].replace(rep[0], chs)
+                    if row['FemaleText'] != '':
+                        # 使男女用一样的对话，不区分 - -'
+                        row[f_key] = row[m_key]
+                else:
+                    for k in rep:
+                        row[m_key] = row[m_key].replace(k, chs)
+                        if row['FemaleText'] != '':
+                            row[f_key] = row[m_key]
+                tmdf.ix[i, [m_key, f_key]] = [row[m_key], row[f_key]]
+
+        # 列Rep
+        def rep2():
+            for k in rep:
+                k = k.replace('[', '\\[').replace(']', '\\]')
+                tmdf[m_key] = tmdf[m_key].str.replace(''.join(k), row['Chs'])
+                tmdf[f_key] = tmdf[f_key].str.replace(''.join(k), row['Chs'])
+
+
+        print('{co} replaced: {e} {s} ==> {b}'.format(
+            co='', e=eng, s=rep, b=chs))
+
+        if type == 2:
+            rep2() # 2m20s
+        if type == 1:
+            rep1() # 4m12s
+
+    tr2_list = patch_result_list(file)
+
+    for x in tr2_list:
+        print('apply patch: ' + x['name'])
+        data = x['data']
+        for index, row in data.iterrows():
+            if row['Rep'] == '' or row['Rep'] is None or row[
+                    'Chs'] == '' or row['Chs'] is None:
+                continue
+            else:
+                tuidao(row)
+
+    end = datetime.datetime.now()
+    print('Time: {s}'.format(s = end - begin))
+    return tmdf
 
 
 def wrquote(xdf):
@@ -176,6 +263,7 @@ def wrquote(xdf):
 
 
 def begin():
+    import timeit
 
     target_file = merge_result_output_filename
 
@@ -203,6 +291,7 @@ def begin():
             xdf[f_key], os.path.join(STORAGE_DIR,
                                      'Tyr_gloss.xlsx')).apply(fix_text)
 
+        # 测下时间
         xdf[m_key] = name_list(xdf[m_key],
                                os.path.join(STORAGE_DIR, 'Tyr_name.xlsx'))
         xdf[f_key] = name_list(xdf[f_key],
@@ -224,13 +313,10 @@ def begin():
         xdf[m_key] = xdf[m_key].apply(fix_text)
         xdf[f_key] = xdf[f_key].apply(fix_text)
 
-        xdf[m_key] = name_list(xdf[m_key],
-                               os.path.join(STORAGE_DIR, 'Poe_name.xlsx'))
-        xdf[f_key] = name_list(xdf[f_key],
-                               os.path.join(STORAGE_DIR, 'Poe_name.xlsx'))
+        # xdf = rep_name(xdf, os.path.join(STORAGE_DIR, 'Poe_name.xlsx', 1))
 
-        xdf[m_key] = gui_patch(xdf[m_key],
-                               os.path.join(STORAGE_DIR, 'Poe_fix.xlsx'))
+        # xdf[m_key] = gui_patch(xdf[m_key],
+        #                        os.path.join(STORAGE_DIR, 'Poe_fix.xlsx'))
 
         final_file = os.path.join(TEMP_DIR, TYPE_NAME + '_final.xlsx')
         print('out:' + final_file)

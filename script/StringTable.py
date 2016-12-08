@@ -68,6 +68,7 @@ class StringTable:
 
         df = pd.DataFrame.from_records(
             args['data'], columns=['Name', 'ID', d_key, f_key])
+        df = df.drop_duplicates()
 
         if index:
             df.index = [df['Name'] + '_' + df['ID']]

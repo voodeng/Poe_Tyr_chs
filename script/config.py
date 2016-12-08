@@ -22,8 +22,8 @@ T_VER = '1.0'
 T_ORG_DIR = 'en'
 
 # Typename = Tyranny | Poe
-TYPE_NAME = 'Tyranny'
-VER_DIR = '1.0'
+TYPE_NAME = 'Poe'
+VER_DIR = '3.05'
 
 # 目录
 # HOME_DIR = os.path.abspath('..')
@@ -68,12 +68,16 @@ translated_result_list = {
         {
             "group_name": "ali4.4",
             "path": "Poe/ali4.4"
+        },
+        {
+            "group_name": "3dm6.0",
+            "path": "Poe/3dm6.0"
         }
     ],
     'Tyranny': [
         {
             "group_name": "ali",
-            "path": "Tyr/ali3.3"
+            "path": "Tyr/ali3.6"
         },
         {
             "group_name": "3dm",
