@@ -21,9 +21,13 @@ POE_DLC2_STRING_DIR = 'DLC2'
 T_VER = '1.0'
 T_ORG_DIR = 'en'
 
+
 # Typename = Tyranny | Poe
+# TYPE_NAME = 'Tyranny'
+# VER_DIR = '1.0'
 TYPE_NAME = 'Poe'
 VER_DIR = '3.05'
+
 
 # 目录
 # HOME_DIR = os.path.abspath('..')
@@ -60,6 +64,11 @@ merge_patched = os.path.join(
 # 最终输出引用表
 output_full_filename = os.path.join(
     OUTPUT_DIR, TYPE_NAME + "_final.xlsx")
+
+# 参考用合集
+tempcustom_full_filename = os.path.join(
+    TEMP_DIR, TYPE_NAME + "_tempCustom.xlsx")
+
 
 # 已有翻译文件夹
 TRANDS_GROUP_DIR = 'translate_group_result'

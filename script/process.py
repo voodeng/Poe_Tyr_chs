@@ -109,7 +109,7 @@ def start(**args):
     print('Config: {t}, {v}'.format(t=TYPE_NAME, v=VER_DIR))
 
     # Original StringTable
-    print('StringTable to Excel')
+    print('\nStringTable to Excel')
 
     print('\nString:\n{org} \n ==> {out}'.format(
         org=STRING_DIR, out=string_result_output_filename))
@@ -126,9 +126,18 @@ def start(**args):
     handle(merge_result_output_filename, merge2excel)
 
     # Use Custom files patch
-    print('\nPatched: \n ==> {out}'.format(out=merge_patched))
+    print('\nPatched: \n ==> {out}'.format(out=tempcustom_full_filename))
     import patch
     patch.begin()
+
+    # Output to STB
+    print('\nOutput Final StringTable: \n ==> {out}'.format(out = output_full_filename))
+    import output
+    final_filename = output_full_filename
+    en_strtbl_path = STRING_DIR
+    output_strtbl_path = os.path.join(OUTPUT_DIR, TYPE_NAME, 'Vmod')
+    output.excel_outstring(final_filename, en_strtbl_path, output_strtbl_path,
+                    'merged', 'merged_female')
 
 
 if __name__ == '__main__':

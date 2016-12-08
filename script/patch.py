@@ -42,8 +42,8 @@ def initxdf(targe_file, custom_file):
         cdf = e2df(custom_file)
         xdf = xdf.join(cdf[['Custom', 'Custom_female']], how='left').fillna('')
     else:
-        xdf[m_key] = ''
-        xdf[f_key] = ''
+        xdf['Custom'] = ''
+        xdf['Custom_female'] = ''
 
     print(xdf.index)
     print('Start fix and Comprese file')
@@ -161,7 +161,7 @@ def name_list(Series, file):
                 am = row['Rep'].split(',')
                 if row['Eng'] != '':
                     am.append(row['Eng'])
-
+                print('{r} ==> {s}'.format(r=row['Rep'], s=row['Chs']))
                 for k in am:
                     k = k.replace('[', '\\[').replace(']', '\\]')
                     Series = Series.str.replace(''.join(k), row['Chs'])
@@ -247,7 +247,7 @@ def rep_name(df, file, type):
 
 
 def wrquote(xdf):
-    print('wrong quote')
+    print('Wrong quote')
     # 不对称或缺失引号，fix_text 处理后，未对称的引号会使用全角符号，方便查找
     # ＇ ＂
     doub = xdf[xdf[m_key].str.contains('＂.*?')]
@@ -304,25 +304,25 @@ def begin():
         wrquote(xdf)
 
         # 生成处理后的文件，只包含merged cell
-        final_file = os.path.join(TEMP_DIR, 'Tyr_final.xlsx')
-        print('out:' + final_file)
+        final_file = output_full_filename
+        print('Out to: ' + final_file)
         xdf[[m_key, f_key]].to_excel(final_file, index_label='index')
         # 参考用
-        xdf.to_excel(os.path.join(TEMP_DIR, 'Tyr_tempcustom.xlsx'))
+        xdf.to_excel(tempcustom_full_filename)
     elif TYPE_NAME == 'Poe':
         xdf[m_key] = xdf[m_key].apply(fix_text)
         xdf[f_key] = xdf[f_key].apply(fix_text)
 
-        # xdf = rep_name(xdf, os.path.join(STORAGE_DIR, 'Poe_name.xlsx', 1))
+        xdf = rep_name(xdf, os.path.join(STORAGE_DIR, 'Poe_name.xlsx'), 1)
 
-        # xdf[m_key] = gui_patch(xdf[m_key],
-        #                        os.path.join(STORAGE_DIR, 'Poe_fix.xlsx'))
+        xdf[m_key] = gui_patch(xdf[m_key],
+                               os.path.join(STORAGE_DIR, 'Poe_fix.xlsx'))
 
-        final_file = os.path.join(TEMP_DIR, TYPE_NAME + '_final.xlsx')
-        print('out:' + final_file)
+        final_file = output_full_filename
+        print('Out to: ' + final_file)
         xdf[[m_key, f_key]].to_excel(final_file, index_label='index')
         # 参考用
-        xdf.to_excel(os.path.join(TEMP_DIR, TYPE_NAME + '_tempcustom.xlsx'))
+        xdf.to_excel(tempcustom_full_filename)
     else:
         print('Config error')
 

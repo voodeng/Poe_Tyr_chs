@@ -1,16 +1,11 @@
 # -*- coding: utf-8 -*-
 import datetime
 import os
-import sys
 import xml.etree.ElementTree as ET
 
-import numpy as np
-import openpyxl
 import pandas as pd
-import xlrd
 
 from config import *
-from lib import *
 
 
 def gen_xml(xmlfilename):
@@ -18,13 +13,14 @@ def gen_xml(xmlfilename):
     root = ET.Element('Language')
     tree = ET.ElementTree(root)
     # 设置1级子节点
-    ET.SubElement(root, 'Name').text = 'VsChs'
-    ET.SubElement(root, 'GUIString').text = 'Vs{}'.format(
+    ET.SubElement(root, 'Name').text = 'Vd.Chs'
+    ET.SubElement(root, 'GUIString').text = 'Vd.{}'.format(
         datetime.datetime.now().strftime('%y%m%d'))
 
-    if not os.path.exists(xmlfilename):
-        # os.mknod(xmlfilename)
+    try:
         tree.write(xmlfilename, 'utf-8')
+    except:
+        return
 
 
 def df_outstring(df, en_strtbl_path, output_strtbl_path, d_key, f_key):
@@ -122,6 +118,7 @@ def excel_outstring(final_filename, en_strtbl_path, output_strtbl_path, d_key,
     except:
         tmdf = pd.read_excel(final_filename).fillna('')
         tmdf.index = [tmdf['Name'] + '_' + tmdf['ID'].astype(str)]
+        tmdf.index.name = 'index'
 
     print(tmdf.index)
 
@@ -130,14 +127,19 @@ def excel_outstring(final_filename, en_strtbl_path, output_strtbl_path, d_key,
 
     xmlfilename = os.path.join(output_strtbl_path, "language.xml")
     gen_xml(xmlfilename)
+    print('gen language.xml')
 
 
 if __name__ == '__main__':
     print('Output Excel to StringTable')
 
-    final_filename = os.path.join(TEMP_DIR, 'Tyr_final.xlsx')
-    en_strtbl_path = os.path.join(ORIGIN_DIR, 'Tyranny/1.0/en')
-    output_strtbl_path = os.path.join(OUTPUT_DIR, 'Tyr/outtext')
+    # final_filename = os.path.join(TEMP_DIR, 'Tyr_final.xlsx')
+    # en_strtbl_path = os.path.join(ORIGIN_DIR, 'Tyranny/1.0/en')
+    # output_strtbl_path = os.path.join(OUTPUT_DIR, 'Tyr/outtext')
+
+    final_filename = output_full_filename
+    en_strtbl_path = STRING_DIR
+    output_strtbl_path = os.path.join(OUTPUT_DIR, TYPE_NAME, 'Vmod')
 
     excel_outstring(final_filename, en_strtbl_path, output_strtbl_path,
                     'merged', 'merged_female')
