@@ -89,10 +89,11 @@ def rm_space(text):
             result.append(first)
 
     result.append(text[-1])
-    # return "".join(result)
+
     new_result = ''.join(result)
     new_result = new_result.replace('[ ', '[').replace('] ', ']').replace(
         '( ', '(').replace(') ', ')').replace('- ', '-')
+    new_result = new_result.strip()
 
     return new_result
 

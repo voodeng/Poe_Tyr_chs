@@ -106,7 +106,7 @@ def start(**args):
             callback(anyfile)
 
     # Print Config
-    print('Config: {t}, {v}'.format(t=TYPE_NAME, v=VER_DIR))
+    # print('Config: {t}, {v}'.format(t=TYPE_NAME, v=VER_DIR))
 
     # Original StringTable
     print('\nStringTable to Excel')
@@ -132,18 +132,20 @@ def start(**args):
 
     # Output to STB
     print('\nOutput Final StringTable: \n ==> {out}'.format(out = output_full_filename))
-    import output
-    final_filename = output_full_filename
-    en_strtbl_path = STRING_DIR
-    output_strtbl_path = os.path.join(OUTPUT_DIR, TYPE_NAME, 'Vmod')
-    output.excel_outstring(final_filename, en_strtbl_path, output_strtbl_path,
-                    'merged', 'merged_female')
+    # import output
+    # final_filename = output_full_filename
+    # en_strtbl_path = STRING_DIR
+    # output_strtbl_path = os.path.join(OUTPUT_DIR, TYPE_NAME, 'Vmod')
+    # output.excel_outstring(final_filename, en_strtbl_path, output_strtbl_path,
+    #                 'merged', 'merged_female')
 
 
 if __name__ == '__main__':
     '''
     y / n : 是否覆盖已有的excel文件
     '''
+    print('Config: {t}, {v}'.format(t=TYPE_NAME, v=VER_DIR))
+
     str = input("want *Override* file? Default is *not* ([y]es/n): ")
     if str.lower() == 'y' or str.lower() == 'yes':
         print('this setting will override exists file!')

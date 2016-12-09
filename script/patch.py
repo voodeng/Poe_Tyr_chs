@@ -28,7 +28,7 @@ def e2df(file):
         df.index.name = 'index'
 
     # 清除重复索引
-    df = df[~df.index.duplicated()] # 原有基础上改，不会重排序索引
+    df = df[~df.index.duplicated()]  # 原有基础上选择，不会重排序索引
     # idx = np.unique(df.index, return_index=True)[1]
     # df = df.ix[idx]
     return df
@@ -38,6 +38,7 @@ def initxdf(targe_file, custom_file):
     ldf = e2df(targe_file)
     xdf = ldf.copy()
 
+    # 手动翻译的列
     if os.path.exists(custom_file):
         cdf = e2df(custom_file)
         xdf = xdf.join(cdf[['Custom', 'Custom_female']], how='left').fillna('')
@@ -167,7 +168,7 @@ def name_list(Series, file):
                     Series = Series.str.replace(''.join(k), row['Chs'])
 
     end = datetime.datetime.now()
-    print('Time: {s}'.format(s = end - begin))
+    print('Time: {s}'.format(s=end - begin))
     return Series
 
 
@@ -220,14 +221,13 @@ def rep_name(df, file, type):
                 tmdf[m_key] = tmdf[m_key].str.replace(''.join(k), row['Chs'])
                 tmdf[f_key] = tmdf[f_key].str.replace(''.join(k), row['Chs'])
 
-
         print('{co} replaced: {e} {s} ==> {b}'.format(
             co='', e=eng, s=rep, b=chs))
 
         if type == 2:
-            rep2() # 2m20s
+            rep2()  # 2m20s
         if type == 1:
-            rep1() # 4m12s
+            rep1()  # 4m12s
 
     tr2_list = patch_result_list(file)
 
@@ -242,12 +242,12 @@ def rep_name(df, file, type):
                 tuidao(row)
 
     end = datetime.datetime.now()
-    print('Time: {s}'.format(s = end - begin))
+    print('Time: {s}'.format(s=end - begin))
     return tmdf
 
 
 def wrquote(xdf):
-    print('Wrong quote')
+    print('Wrong pairs quote')
     # 不对称或缺失引号，fix_text 处理后，未对称的引号会使用全角符号，方便查找
     # ＇ ＂
     doub = xdf[xdf[m_key].str.contains('＂.*?')]
@@ -255,11 +255,7 @@ def wrquote(xdf):
     tign = pd.merge(doub, sign, how='outer')
     tign.index = [tign['Name'] + '_' + tign['ID'].astype('str')]
     tign[['Name', 'ID', 'DefaultText', m_key]].to_excel(
-        os.path.join(TEMP_DIR, 'quote.xlsx'), index_label='index')
-
-    # 后期依次修改，先期转换为英文标点使用
-    xdf[m_key] = xdf[m_key].str.replace('＂', '"')
-    xdf[m_key] = xdf[m_key].str.replace('＇', "'")
+        os.path.join(TEMP_DIR, TYPE_NAME + 'quote.xlsx'), index_label='index')
 
 
 def begin():
@@ -267,10 +263,8 @@ def begin():
 
     target_file = merge_result_output_filename
 
-    if TYPE_NAME == 'Tyranny':
-        custom_file = os.path.join(STORAGE_DIR, 'Tyr_custom.xlsx')
-    else:
-        custom_file = os.path.join(STORAGE_DIR, 'Poe_en-chs.xlsx')
+    # 自翻译文件： storage/xxx_custom.xlsx
+    custom_file = os.path.join(STORAGE_DIR, TYPE_NAME + '_custom.xlsx')
 
     xdf = initxdf(target_file, custom_file)
 
@@ -282,7 +276,7 @@ def begin():
             return not has_ch(text)
 
         xdf[xdf[m_key].apply(not_ch)].drop_duplicates(m_key).to_excel(
-            os.path.join(TEMP_DIR, 'notrans.xlsx'))
+            os.path.join(TEMP_DIR, TYPE_NAME + '_notrans.xlsx'))
 
         xdf[m_key] = gloss_patch(
             xdf[m_key], os.path.join(STORAGE_DIR,
@@ -291,7 +285,6 @@ def begin():
             xdf[f_key], os.path.join(STORAGE_DIR,
                                      'Tyr_gloss.xlsx')).apply(fix_text)
 
-        # 测下时间
         xdf[m_key] = name_list(xdf[m_key],
                                os.path.join(STORAGE_DIR, 'Tyr_name.xlsx'))
         xdf[f_key] = name_list(xdf[f_key],
@@ -302,13 +295,17 @@ def begin():
 
         # 标点
         wrquote(xdf)
+        # 后期依次修改，先期转换为英文标点使用
+        xdf[m_key] = xdf[m_key].str.replace('＂', '"')
+        xdf[m_key] = xdf[m_key].str.replace('＇', "'")
 
         # 生成处理后的文件，只包含merged cell
         final_file = output_full_filename
         print('Out to: ' + final_file)
         xdf[[m_key, f_key]].to_excel(final_file, index_label='index')
-        # 参考用
+        # 参考留作翻译用,改名
         xdf.to_excel(tempcustom_full_filename)
+
     elif TYPE_NAME == 'Poe':
         xdf[m_key] = xdf[m_key].apply(fix_text)
         xdf[f_key] = xdf[f_key].apply(fix_text)

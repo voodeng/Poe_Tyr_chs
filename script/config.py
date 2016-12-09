@@ -18,15 +18,15 @@ POE_DLC1_STRING_DIR = 'DLC1'
 POE_DLC2_STRING_DIR = 'DLC2'
 
 # Tyranny
-T_VER = '1.0'
+T_VER = '1.02'
 T_ORG_DIR = 'en'
 
 
 # Typename = Tyranny | Poe
-# TYPE_NAME = 'Tyranny'
-# VER_DIR = '1.0'
-TYPE_NAME = 'Poe'
-VER_DIR = '3.05'
+TYPE_NAME = 'Tyranny'
+VER_DIR = '1.02'
+# TYPE_NAME = 'Poe'
+# VER_DIR = '3.04'
 
 
 # 目录

@@ -22,7 +22,6 @@ class StringTable:
         '''
         tree = ET.parse(filename)
         root = tree.getroot()
-
         # print(filename)
         name = root.find(TAG_STRING_TABLE_NAME).text
         items = []
@@ -34,7 +33,6 @@ class StringTable:
             item = (name, id, default_text, female_text)
             items.append(item)
         return items
-
 
     def parse_dir(self, strtbl_dir):
         result = []
@@ -48,7 +46,6 @@ class StringTable:
                 items = self.parse_file(full_filename)
                 result.extend(items)
         return result
-
 
     def create_df(self, **args):
         '''
